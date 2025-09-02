@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Sales Analytics</title>
+    <style>
+      body {
+        font-family: "Poppins", sans-serif;
+        background: linear-gradient(135deg, #74ebd5, #9face6);
+        margin: 0;
+        padding: 20px;
+        color: #333;
+      }
+      .container {
+        background: #fff;
+        padding: 25px;
+        border-radius: 15px;
+        box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        margin-bottom: 20px;
+      }
+      h2 {
+        text-align: center;
+        color: #2c3e50;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 20px;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+      }
+      th,
+      td {
+        padding: 12px;
+        text-align: center;
+        border-bottom: 1px solid #eee;
+      }
+      th {
+        background: #6c5ce7;
+        color: white;
+      }
+      tr:hover {
+        background: #f1f1ff;
+      }
+      .back-btn {
+        display: block;
+        margin: 20px auto;
+        padding: 12px 20px;
+        background: #6c5ce7;
+        color: white;
+        border-radius: 8px;
+        text-align: center;
+        text-decoration: none;
+        font-weight: bold;
+        transition: 0.3s;
+        width: 200px;
+      }
+      .back-btn:hover {
+        background: #4834d4;
+      }
+      .summary-box {
+        background: #f9f9ff;
+        border: 2px solid #6c5ce7;
+        padding: 15px;
+        margin: 15px 0;
+        border-radius: 12px;
+        font-size: 18px;
+        font-weight: bold;
+        color: #2c3e50;
+      }
+      .grand-total {
+        background: #f1f1ff;
+        font-weight: bold;
+        color: #2c3e50;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <h2>📊 Sales Analytics</h2>
+
+      <div class="summary-box">💰 Total Sales: ₹{{ total_sales }}</div>
+
+      <div class="summary-box">📈 Total Profit: ₹{{ total_profit }}</div>
+
+      <h3>🔥 Top 5 Products</h3>
+      <table>
+        <tr>
+          <th>Product</th>
+          <th>Quantity Sold</th>
+          <th>Total Amount (₹)</th>
+          <th>Profit (₹)</th>
+        </tr>
+        {% for p in top_products %}
+        <tr>
+          <td>{{ p.name }}</td>
+          <td>{{ p.qty_sold }}</td>
+          <td>{{ p.total_amount }}</td>
+          <td>{{ p.profit }}</td>
+        </tr>
+        {% endfor %}
+        <tr class="grand-total">
+          <td colspan="2">TOTAL</td>
+          <td>₹{{ total_sales }}</td>
+          <td>₹{{ total_profit }}</td>
+        </tr>
+      </table>
+
+      <h3>📅 Sales (Last 7 Days)</h3>
+      <table>
+        <tr>
+          <th>Date</th>
+          <th>Total Sales (₹)</th>
+          <th>Total Profit (₹)</th>
+        </tr>
+        {% for s in sales_by_date %}
+        <tr>
+          <td>{{ s.date }}</td>
+          <td>{{ s.daily_total }}</td>
+          <td>{{ s.daily_profit }}</td>
+        </tr>
+        {% endfor %}
+      </table>
+
+      <a href="/" class="back-btn">⬅ Back to Billing</a>
+    </div>
+  </body>
+</html>

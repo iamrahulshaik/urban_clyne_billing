@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Urban Clyne - Bill</title>
+  <style>
+    body { font-family: Arial, sans-serif; background:#f4f6f9; margin:0; padding:20px; }
+    h1 { text-align:center; color:#222; }
+    form { display:flex; gap:10px; justify-content:center; margin-bottom:20px; }
+    input, button { padding:8px; border-radius:6px; border:1px solid #ccc; }
+    button { background:#222; color:white; cursor:pointer; }
+    button:hover { background:#444; }
+    table { width:100%; border-collapse:collapse; margin-top:20px; background:white; }
+    th, td { border:1px solid #ddd; padding:10px; text-align:center; }
+    th { background:#222; color:white; }
+    .actions { margin-top:20px; text-align:center; }
+    .actions a { margin:0 10px; padding:10px 20px; background:#222; color:white; text-decoration:none; border-radius:8px; }
+    .actions a:hover { background:#444; }
+  </style>
+</head>
+<body>
+  <h1>URBAN CLYNE - Bill Maker</h1>
+
+  <form method="POST">
+    <input type="text" name="item_name" placeholder="Item Name" required>
+    <input type="number" name="price" placeholder="Price" step="0.01" required>
+    <input type="number" name="qty" placeholder="Qty" min="1" required>
+    <input type="number" name="print_price" placeholder="Print Price" step="0.01">
+    <button type="submit">Add Item</button>
+  </form>
+
+  <table>
+    <tr>
+      <th>Item</th>
+      <th>Qty</th>
+      <th>Price</th>
+      <th>Print</th>
+      <th>Total</th>
+    </tr>
+    {% set grand_total = 0 %}
+    {% for bill in bills %}
+      {% set total = (bill[2] * bill[3]) + bill[4] %}
+      {% set grand_total = grand_total + total %}
+      <tr>
+        <td>{{ bill[1] }}</td>
+        <td>{{ bill[3] }}</td>
+        <td>{{ bill[2] }}</td>
+        <td>{{ bill[4] }}</td>
+        <td>{{ total }}</td>
+      </tr>
+    {% endfor %}
+    <tr>
+      <th colspan="4">Grand Total</th>
+      <th>{{ grand_total }}</th>
+    </tr>
+  </table>
+
+  <div class="actions">
+    <a href="/download-pdf">Download PDF</a>
+    <a href="/share-whatsapp/91XXXXXXXXXX">Share on WhatsApp</a>
+  </div>
+</body>
+</html>

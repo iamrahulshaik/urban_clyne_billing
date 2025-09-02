@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Bill Page</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      body {
+        font-family: "Poppins", sans-serif;
+        background: linear-gradient(135deg, #74ebd5, #9face6);
+        margin: 0;
+        padding: 20px;
+        color: #333;
+      }
+
+      .form-section {
+        background: #fff;
+        padding: 20px;
+        margin-bottom: 25px;
+        border-radius: 15px;
+        box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+      }
+
+      .form-section h2 {
+        text-align: center;
+        color: #2c3e50;
+      }
+
+      label {
+        font-weight: 600;
+        display: block;
+        margin-top: 10px;
+        color: #444;
+      }
+
+      input,
+      select {
+        width: 100%;
+        padding: 10px;
+        margin-top: 5px;
+        border-radius: 8px;
+        border: 1px solid #ccc;
+        font-size: 14px;
+      }
+
+      button {
+        padding: 10px 16px;
+        border: none;
+        border-radius: 8px;
+        font-size: 14px;
+        cursor: pointer;
+        transition: 0.3s;
+      }
+
+      .add-btn {
+        background: #00b894;
+        color: white;
+        margin-top: 12px;
+      }
+
+      .remove-btn {
+        background: #e74c3c;
+        color: white;
+      }
+
+      .submit-btn {
+        background: #6c5ce7;
+        color: white;
+        width: 100%;
+        margin-top: 20px;
+        font-size: 16px;
+        font-weight: 600;
+      }
+
+      .submit-btn:hover {
+        background: #4834d4;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        margin-top: 15px;
+        border-radius: 12px;
+        overflow: hidden;
+        box-shadow: 0 3px 10px rgba(0, 0, 0, 0.08);
+      }
+
+      th,
+      td {
+        padding: 12px;
+        text-align: center;
+        border-bottom: 1px solid #eee;
+      }
+
+      th {
+        background: #6c5ce7;
+        color: #fff;
+        font-size: 14px;
+        text-transform: uppercase;
+      }
+
+      .qty-control {
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 5px;
+      }
+
+      .qty-control input {
+        width: 50px;
+        text-align: center;
+      }
+
+      .qty-btn {
+        background: #6c5ce7;
+        color: #fff;
+        border-radius: 6px;
+        padding: 5px 10px;
+        font-size: 16px;
+      }
+
+      .qty-btn:hover {
+        background: #4834d4;
+      }
+
+      .total-box {
+        background: #f9f9ff;
+        border: 2px solid #6c5ce7;
+        padding: 15px;
+        text-align: right;
+        font-weight: bold;
+        font-size: 18px;
+        margin-top: 20px;
+        border-radius: 12px;
+        color: #2c3e50;
+      }
+
+      /* ✅ Mobile-friendly table */
+      @media (max-width: 768px) {
+        table,
+        thead,
+        tbody,
+        th,
+        td,
+        tr {
+          display: block;
+        }
+
+        thead tr {
+          display: none; /* hide headers */
+        }
+
+        tr {
+          margin-bottom: 15px;
+          border: 1px solid #ddd;
+          border-radius: 10px;
+          background: #fff;
+          padding: 10px;
+          box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+        }
+
+        td {
+          border: none;
+          text-align: left;
+          padding: 8px 10px;
+          display: flex;
+          justify-content: space-between;
+          font-size: 14px;
+        }
+
+        td::before {
+          content: attr(data-label);
+          font-weight: 600;
+          color: #333;
+        }
+
+        /* Remove label for Item, Size, Action on mobile */
+        td[data-label="Item"]::before,
+        td[data-label="Size"]::before,
+        td[data-label="Action"]::before {
+          content: "";
+        }
+
+        /* Ensure selects show placeholder meaningfully */
+        select[name="product_id"] option:first-child {
+          color: #888;
+        }
+
+        select[name="size"] option:first-child {
+          color: #888;
+        }
+
+        .qty-control {
+          flex-direction: row;
+          justify-content: flex-end;
+        }
+      }
+    </style>
+
+    <script>
+      function addRow() {
+        let table = document.getElementById("itemsTable");
+        let row = table.insertRow();
+        row.innerHTML = document.getElementById("itemRowTemplate").innerHTML;
+      }
+
+      function removeRow(btn) {
+        let row = btn.closest("tr");
+        row.parentNode.removeChild(row);
+        updateGrandTotal();
+      }
+
+      function updatePrice(selectElem) {
+        let row = selectElem.closest("tr");
+        let priceCell = row.querySelector(".price-cell");
+        let qtyInput = row.querySelector(".qty-input");
+        let totalCell = row.querySelector(".total-cell");
+
+        let selectedOption = selectElem.options[selectElem.selectedIndex];
+        let price = parseFloat(selectedOption.getAttribute("data-price")) || 0;
+        priceCell.innerText = price;
+
+        let qty = parseInt(qtyInput.value) || 1;
+        totalCell.innerText = price * qty;
+
+        updateGrandTotal();
+      }
+
+      function updateTotal(qtyInput) {
+        let row = qtyInput.closest("tr");
+        let price = parseFloat(row.querySelector(".price-cell").innerText) || 0;
+        let qty = parseInt(qtyInput.value) || 1;
+        row.querySelector(".total-cell").innerText = price * qty;
+        updateGrandTotal();
+      }
+
+      function changeQty(btn, delta) {
+        let input = btn.parentNode.querySelector(".qty-input");
+        let val = parseInt(input.value) || 1;
+        val = Math.max(1, val + delta);
+        input.value = val;
+        updateTotal(input);
+      }
+
+      function updateGrandTotal() {
+        let totalCells = document.querySelectorAll(".total-cell");
+        let grand = 0;
+        totalCells.forEach((cell) => {
+          grand += parseFloat(cell.innerText) || 0;
+        });
+        document.getElementById("grandTotal").innerText = grand;
+      }
+    </script>
+  </head>
+  <body>
+    <div class="form-section">
+      <h2>🧾 Create Bill</h2>
+      <form method="POST" action="/generate-bill">
+        <table id="itemsTable">
+          <thead>
+            <tr>
+              <th>Item</th>
+              <th>Size</th>
+              <th>Price</th>
+              <th>Quantity</th>
+              <th>Total</th>
+              <th>Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr id="itemRowTemplate">
+              <td data-label="Item">
+                <select name="product_id" onchange="updatePrice(this)">
+                  <option value="">Select Item</option>
+                  {% for product in products %}
+                  <option
+                    value="{{ product.id }}"
+                    data-price="{{ product.selling_price }}"
+                  >
+                    {{ product.name }}
+                  </option>
+                  {% endfor %}
+                </select>
+              </td>
+              <td data-label="Size">
+                <select name="size">
+                  <option value="">Select Size</option>
+                  <option value="S">S</option>
+                  <option value="M">M</option>
+                  <option value="L">L</option>
+                  <option value="XL">XL</option>
+                </select>
+              </td>
+              <td class="price-cell" data-label="Price">0</td>
+              <td data-label="Quantity">
+                <div class="qty-control">
+                  <button
+                    type="button"
+                    class="qty-btn"
+                    onclick="changeQty(this, -1)"
+                  >
+                    -
+                  </button>
+                  <input
+                    type="number"
+                    name="quantity"
+                    class="qty-input"
+                    min="1"
+                    value="1"
+                    onchange="updateTotal(this)"
+                  />
+                  <button
+                    type="button"
+                    class="qty-btn"
+                    onclick="changeQty(this, 1)"
+                  >
+                    +
+                  </button>
+                </div>
+              </td>
+              <td class="total-cell" data-label="Total">0</td>
+              <td data-label="Action">
+                <button
+                  type="button"
+                  class="remove-btn"
+                  onclick="removeRow(this)"
+                >
+                  Remove
+                </button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <button type="button" class="add-btn" onclick="addRow()">
+          + Add Item
+        </button>
+
+        <div class="total-box">
+          Grand Total: ₹<span id="grandTotal">0</span>
+        </div>
+
+        <label>Customer Name:</label>
+        <input type="text" name="customer_name" required />
+
+        <label>Mobile Number:</label>
+        <input type="text" name="mobile_number" required />
+
+        <button type="submit" class="submit-btn">Generate Bill</button>
+
+        <a href="/analytics">
+          <button
+            type="button"
+            class="submit-btn"
+            style="background: #0984e3; margin-top: 15px"
+          >
+            📊 View Analytics
+          </button>
+        </a>
+      </form>
+
+      <button type="button" class="submit-btn" onclick="toggleManage()">
+        ⚙️ Manage Products
+      </button>
+
+      <div id="manageSection" style="display: none; margin-top: 20px">
+        <!-- Add Product -->
+        <div class="form-section" style="margin-bottom: 20px">
+          <h2>➕ Add New Product</h2>
+          <form method="POST" action="/add_product">
+            <label>Product Name:</label>
+            <input type="text" name="name" required />
+
+            <label>Buying Price:</label>
+            <input type="number" name="buying_price" min="1" required />
+
+            <label>Selling Price:</label>
+            <input type="number" name="selling_price" min="1" required />
+
+            <label>Sizes (comma separated):</label>
+            <input type="text" name="sizes" value="S,M,L,XL" />
+
+            <br />
+            <button type="submit" class="add-btn">Add Product</button>
+          </form>
+        </div>
+
+        <!-- Update Product -->
+        <div class="form-section">
+          <h2>✏️ Update Product</h2>
+          <form method="POST" action="/update_product">
+            <label>Select Product:</label>
+            <select name="product_id" required>
+              <option value="">-- Select Product --</option>
+              {% for product in products %}
+              <option value="{{ product.id }}">{{ product.name }}</option>
+              {% endfor %}
+            </select>
+
+            <label>New Product Name:</label>
+            <input
+              type="text"
+              name="new_name"
+              placeholder="Leave empty to keep same"
+            />
+
+            <label>New Buying Price:</label>
+            <input
+              type="number"
+              name="new_buying_price"
+              step="0.01"
+              placeholder="Leave empty to keep same"
+            />
+
+            <label>New Selling Price:</label>
+            <input
+              type="number"
+              name="new_selling_price"
+              step="0.01"
+              placeholder="Leave empty to keep same"
+            />
+
+            <br />
+            <button type="submit" class="add-btn">Update Product</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </body>
+  <script>
+    function toggleManage() {
+      let section = document.getElementById("manageSection");
+      section.style.display =
+        section.style.display === "none" ? "block" : "none";
+    }
+  </script>
+</html>

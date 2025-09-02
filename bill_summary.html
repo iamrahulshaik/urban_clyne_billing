@@ -1,0 +1,270 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Bill Summary - URBAN CLYNE</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <style>
+      body {
+        font-family: "Poppins", sans-serif;
+        margin: 0;
+        padding: 15px;
+        background: linear-gradient(135deg, #e3f2fd, #f1f8e9);
+        color: #333;
+      }
+
+      h2 {
+        text-align: center;
+        color: #2c3e50;
+        font-size: 24px;
+        margin-bottom: 15px;
+        letter-spacing: 0.5px;
+      }
+
+      .bill-header {
+        display: flex;
+        justify-content: space-between;
+        background: #ffffff;
+        padding: 12px 15px;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+        margin-bottom: 20px;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 12px;
+      }
+
+      .bill-header p {
+        margin: 4px 0;
+        font-size: 14px;
+        color: #444;
+      }
+      .actions {
+        text-align: right;
+        flex: 1;
+      }
+
+      /* ✅ Responsive Table */
+      .table-container {
+        width: 100%;
+        overflow-x: auto;
+        border-radius: 12px;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        background: #ffffff;
+      }
+
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        min-width: 500px; /* prevents text overlap */
+      }
+
+      th,
+      td {
+        padding: 12px;
+        text-align: center;
+        border-bottom: 1px solid #f0f0f0;
+        font-size: 14px;
+        white-space: nowrap; /* keeps columns tidy */
+      }
+
+      th {
+        background: #1976d2;
+        color: #fff;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+
+      tr:hover {
+        background: #f9f9f9;
+      }
+
+      p.success {
+        text-align: center;
+        background: #e8f5e9;
+        color: #2e7d32;
+        padding: 10px;
+        font-weight: bold;
+        border-radius: 8px;
+        margin-top: 15px;
+        box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+        font-size: 14px;
+      }
+
+      /* 🎨 Buttons */
+      .btn {
+        display: inline-block;
+        background: #1976d2;
+        color: #fff;
+        padding: 8px 14px;
+        border-radius: 8px;
+        cursor: pointer;
+        font-weight: bold;
+        font-size: 13px;
+        text-decoration: none;
+        transition: all 0.3s ease;
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+        margin-left: 6px;
+      }
+
+      .btn:hover {
+        background: #125ca1;
+      }
+      .whatsapp-btn {
+        background: #25d366;
+      }
+      .whatsapp-btn:hover {
+        background: #1ebe5d;
+      }
+
+      .back-btn {
+        display: block;
+        max-width: 240px;
+        margin: 20px auto;
+        text-align: center;
+        background: #6c5ce7;
+        color: white;
+        padding: 12px;
+        border-radius: 8px;
+        text-decoration: none;
+        font-weight: bold;
+        transition: 0.3s;
+        box-shadow: 0 3px 8px rgba(0, 0, 0, 0.15);
+      }
+
+      .back-btn:hover {
+        background: #4834d4;
+      }
+
+      /* 📱 Mobile Optimizations */
+      @media (max-width: 768px) {
+        body {
+          padding: 10px;
+        }
+        h2 {
+          font-size: 20px;
+        }
+        .bill-header {
+          flex-direction: column;
+          align-items: flex-start;
+        }
+        .actions {
+          text-align: left;
+          width: 100%;
+        }
+        .btn {
+          display: block;
+          margin: 6px 0;
+          width: 100%;
+          text-align: center;
+        }
+        .back-btn {
+          width: 100%;
+        }
+        th,
+        td {
+          font-size: 13px;
+          padding: 10px;
+        }
+      }
+
+      @media (max-width: 480px) {
+        table {
+          min-width: 100%;
+        }
+        th,
+        td {
+          font-size: 12px;
+          padding: 8px;
+        }
+        h2 {
+          font-size: 18px;
+        }
+      }
+
+      @media (max-width: 768px) {
+        .btn {
+          display: block;
+          margin: 6px 0;
+          width: 90%;
+          text-align: center;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <h2>🧾 URBAN CLYNE - Bill Summary</h2>
+
+    <div class="bill-header">
+      <div>
+        <p><b>Customer:</b> {{ customer_name }}</p>
+        <p><b>Mobile:</b> <span id="cust-mobile">{{ mobile_number }}</span></p>
+      </div>
+      <div class="actions">
+        <p><b>Date:</b> {{ bill_date }}</p>
+        <a href="/download-pdf" class="btn">⬇️ Download PDF</a>
+        <button class="btn whatsapp-btn" onclick="shareToWhatsApp()">
+          📲 Share to WhatsApp
+        </button>
+      </div>
+    </div>
+
+    <!-- ✅ Responsive Table Wrapper -->
+    <div class="table-container">
+      <table>
+        <tr>
+          <th>Item</th>
+          <th>Size</th>
+          <th>Qty</th>
+          <th>Price</th>
+          <th>Total</th>
+        </tr>
+        {% for item in items %}
+        <tr>
+          <td>{{ item.name }}</td>
+          <td>{{ item.size }}</td>
+          <td>{{ item.qty }}</td>
+          <td>₹{{ item.price }}</td>
+          <td>₹{{ item.total }}</td>
+        </tr>
+        {% endfor %}
+        <tr>
+          <th colspan="4">Grand Total</th>
+          <th>₹{{ grand_total }}</th>
+        </tr>
+      </table>
+    </div>
+
+    <p class="success">✅ Bill Saved Successfully!</p>
+
+    <!-- Back button -->
+    <a href="/" class="back-btn">⬅ Back to Billing</a>
+
+    <script>
+      function normalizeToE164(raw, defaultCountryCode = "91") {
+        let digits = (raw || "").replace(/\D+/g, "");
+        if (digits.length > 10) return digits;
+        if (digits.length === 10) return defaultCountryCode + digits;
+        return digits;
+      }
+
+      function shareToWhatsApp() {
+        const mobileRaw = document.getElementById("cust-mobile").innerText;
+        const phone = normalizeToE164(mobileRaw, "91");
+        if (!phone) {
+          alert("Invalid mobile number.");
+          return;
+        }
+
+        const pdfLink = window.location.origin + "/download-pdf";
+        const message = `Hello {{ customer_name }}, your bill from *URBAN CLYNE* is ready.\n\nPlease download it here:\n${pdfLink}\n\nThank you for visiting us! 🙏 Follow us on Instagram @urban_clyne for more updates.`;
+        const encoded = encodeURIComponent(message);
+
+        window.open(
+          `https://api.whatsapp.com/send?phone=${phone}&text=${encoded}`,
+          "_blank"
+        );
+      }
+    </script>
+  </body>
+</html>
