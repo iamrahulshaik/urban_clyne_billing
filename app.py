@@ -1,34 +1,42 @@
 from flask import Flask, render_template, request, redirect, url_for, send_file
 import pymysql
+from pymysql.cursors import DictCursor
 from datetime import datetime
-from fpdf import FPDF   # pip install fpdf
+from fpdf import FPDF
 import os
 import urllib.parse
 import webbrowser
 
 app = Flask(__name__)
 
-# MySQL connection
-
+# ✅ Configure PyMySQL to act like MySQLdb
 pymysql.install_as_MySQLdb()
 import MySQLdb
-conn = MySQLdb.connect(
-    host="your-host",
-    user="your-user",
-    password="your-password",
-    database="your-database"
-)
+
+# ✅ Database connection function
+def get_connection():
+    return MySQLdb.connect(
+        host=os.getenv("DB_HOST", "localhost"),
+        user=os.getenv("DB_USER", "root"),
+        password=os.getenv("DB_PASSWORD", ""),
+        database=os.getenv("DB_NAME", "test"),
+        port=int(os.getenv("DB_PORT", 3306)),
+        cursorclass=DictCursor
+    )
 
 
-# Home page -> billing form
+# ✅ Home page -> billing form
 @app.route("/")
 def bill_page():
+    conn = get_connection()
+    cursor = conn.cursor()
     cursor.execute("SELECT * FROM products")
     products = cursor.fetchall()
+    conn.close()
     return render_template("bill.html", products=products)
 
 
-# Handle bill submission
+# ✅ Handle bill submission
 @app.route('/generate-bill', methods=['POST'])
 def generate_bill():
     customer_name = request.form['customer_name']
@@ -39,6 +47,9 @@ def generate_bill():
 
     bill_items = []
     grand_total = 0
+
+    conn = get_connection()
+    cursor = conn.cursor()
 
     for i in range(len(product_ids)):
         if not product_ids[i] or not quantities[i]:
@@ -52,7 +63,6 @@ def generate_bill():
             continue
 
         size = sizes[i]
-        # ✅ Use selling_price (not buying price)
         cursor.execute("SELECT name, selling_price FROM products WHERE id=%s", (pid,))
         product = cursor.fetchone()
         if not product:
@@ -65,19 +75,20 @@ def generate_bill():
             INSERT INTO bills (customer_name, mobile_number, product_id, size, quantity, total, bill_date)
             VALUES (%s, %s, %s, %s, %s, %s, %s)
         """, (customer_name, mobile_number, pid, size, qty, total, datetime.now()))
-        db.commit()
+        conn.commit()
 
         bill_items.append({
             "name": product["name"],
             "size": size,
             "qty": qty,
-            "price": product["selling_price"],  # ✅ selling price only
+            "price": product["selling_price"],
             "total": total
         })
 
+    conn.close()
+
     bill_date = datetime.now().strftime("%d-%m-%Y %H:%M")
 
-    # Save bill in session (so we can use it in PDF/WhatsApp)
     app.config["LAST_BILL"] = {
         "customer_name": customer_name,
         "mobile_number": mobile_number,
@@ -140,12 +151,10 @@ def download_pdf():
     pdf.cell(150, 10, "Grand Total", 1)
     pdf.cell(40, 10, str(bill["grand_total"]), 1, ln=True)
 
-    # Footer
     pdf.ln(20)
     pdf.set_font("Arial", "I", 10)
     pdf.multi_cell(0, 10, "Thank you for visiting us!\nVisit again and follow our Insta page @urban_clyne")
 
-    # Save PDF
     file_path = "bill.pdf"
     pdf.output(file_path)
 
@@ -163,8 +172,6 @@ def share_whatsapp(mobile):
     encoded_msg = urllib.parse.quote(message)
 
     whatsapp_url = f"https://wa.me/{mobile}?text={encoded_msg}"
-    webbrowser.open(whatsapp_url)  # Opens WhatsApp in browser
-
     return redirect(whatsapp_url)
 
 
@@ -176,19 +183,23 @@ def add_product():
     selling_price = request.form['selling_price']
     sizes = request.form.get('sizes', 'S,M,L,XL')
 
+    conn = get_connection()
+    cursor = conn.cursor()
     cursor.execute(
         "INSERT INTO products (name, buying_price, selling_price, sizes) VALUES (%s, %s, %s, %s)",
         (name, buying_price, selling_price, sizes)
     )
-    db.commit()
+    conn.commit()
+    conn.close()
     return redirect('/')
 
-# ✅ Sales Analytics Page
+
+# ✅ Sales Analytics
 @app.route("/analytics")
 def analytics():
-    cursor = db.cursor()
+    conn = get_connection()
+    cursor = conn.cursor()
 
-    # Total Sales & Profit
     cursor.execute("""
         SELECT 
             SUM(b.total) AS total_sales,
@@ -200,7 +211,6 @@ def analytics():
     total_sales = totals["total_sales"] or 0
     total_profit = totals["total_profit"] or 0
 
-    # Top 5 Selling Products with Profit
     cursor.execute("""
         SELECT 
             p.name,
@@ -215,7 +225,6 @@ def analytics():
     """)
     top_products = cursor.fetchall()
 
-    # Sales by Date (last 7 days) with Profit
     cursor.execute("""
         SELECT 
             DATE(b.bill_date) AS date,
@@ -230,7 +239,7 @@ def analytics():
     """)
     sales_by_date = cursor.fetchall()
 
-    cursor.close()
+    conn.close()
 
     return render_template(
         "analytics.html",
@@ -239,8 +248,9 @@ def analytics():
         top_products=top_products,
         sales_by_date=sales_by_date
     )
-    
-    # ✅ Update existing product
+
+
+# ✅ Update product
 @app.route('/update_product', methods=['POST'])
 def update_product():
     product_id = request.form['product_id']
@@ -254,11 +264,9 @@ def update_product():
     if new_name:
         update_fields.append("name = %s")
         values.append(new_name)
-
     if new_buying_price:
         update_fields.append("buying_price = %s")
         values.append(new_buying_price)
-
     if new_selling_price:
         update_fields.append("selling_price = %s")
         values.append(new_selling_price)
@@ -269,14 +277,15 @@ def update_product():
     values.append(product_id)
 
     query = f"UPDATE products SET {', '.join(update_fields)} WHERE id = %s"
+
+    conn = get_connection()
+    cursor = conn.cursor()
     cursor.execute(query, tuple(values))
-    db.commit()
+    conn.commit()
+    conn.close()
 
     return redirect('/')
 
 
-
-
 if __name__ == "__main__":
-    app.run(debug=True)
-
+    app.run(debug=True, host="0.0.0.0", port=int(os.getenv("PORT", 8080)))
