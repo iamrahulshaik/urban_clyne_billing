@@ -9,14 +9,15 @@ import webbrowser
 app = Flask(__name__)
 
 # MySQL connection
-db = pymysql.connect(
-    host="localhost",
-    user="root",
-    password="mysql",
-    database="bills",
-    cursorclass=pymysql.cursors.DictCursor
+
+pymysql.install_as_MySQLdb()
+import MySQLdb
+conn = MySQLdb.connect(
+    host="your-host",
+    user="your-user",
+    password="your-password",
+    database="your-database"
 )
-cursor = db.cursor()
 
 
 # Home page -> billing form
@@ -278,3 +279,4 @@ def update_product():
 
 if __name__ == "__main__":
     app.run(debug=True)
+
